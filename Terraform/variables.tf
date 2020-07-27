@@ -1,7 +1,3 @@
-locals {
-  cloudflare_ttl = 120
-}
-
 variable "azure_client_id" {
   type        = string
   description = "The Azure service principal id"
