@@ -1,3 +1,3 @@
-resource "cloudflare_zone" "elliotpryde" {
-  zone = "elliotpryde.com"
+resource "aws_route53_zone" "elliotpryde-com" {
+  name = "elliotpryde.com"
 }

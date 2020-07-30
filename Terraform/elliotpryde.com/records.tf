@@ -1,7 +1,10 @@
-resource "cloudflare_record" "traefik-wildcard" {
-  zone_id = cloudflare_zone.elliotpryde.id
+resource "aws_route53_record" "traefik-wildcard" {
+  zone_id = aws_route53_zone.elliotpryde-com.zone_id
   name    = "*"
-  value   = var.nas_public_ip
   type    = "A"
-  ttl     = local.cloudflare_ttl
+  ttl     = local.dns_ttl
+
+  records = [
+    var.nas_public_ip
+  ]
 }

@@ -8,12 +8,6 @@ terraform {
   }
 }
 
-provider "cloudflare" {
-  version = "~> 2.8"
-  email   = var.cloudflare_email
-  api_key = var.cloudflare_api_key
-}
-
 provider "azurerm" {
   version         = "~> 2.20"
   client_id       = var.azure_client_id

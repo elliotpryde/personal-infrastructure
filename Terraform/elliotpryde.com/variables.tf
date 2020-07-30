@@ -1,5 +1,5 @@
 locals {
-  cloudflare_ttl = 120
+  dns_ttl = 120
 }
 
 variable "nas_public_ip" {

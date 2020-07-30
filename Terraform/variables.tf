@@ -18,16 +18,6 @@ variable "azure_tenant_id" {
   description = "The Azure tenant id"
 }
 
-variable "cloudflare_email" {
-  type        = string
-  description = "The Cloudflare account email address."
-}
-
-variable "cloudflare_api_key" {
-  type        = string
-  description = "The Cloudflare account API key."
-}
-
 variable "nas_public_ip" {
   type        = string
   description = "The public IP address of my NAS"
