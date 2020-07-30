@@ -24,6 +24,10 @@ provider "azurerm" {
   features {}
 }
 
+provider "aws" {
+  region = "eu-west-2"
+}
+
 module "elliotpryde-com" {
   source        = "./elliotpryde.com"
   nas_public_ip = var.nas_public_ip
