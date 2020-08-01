@@ -14,6 +14,14 @@ locals {
       data     = "protonmail3.domainkey.d4zotdvax2nt4447zdfl5bkm6uc3lozcidvlw5jdxq3hhurmq3u5q.domains.proton.ch."
     }
   ]
+  nas_service_endpoints = [
+    { fqdn : "plex.elliotpryde.com", path : "/identity" },
+    { fqdn : "homeassistant.elliotpryde.com", path : "/" },
+    { fqdn : "wallabag.elliotpryde.com", path : "/" },
+    { fqdn : "miniflux.elliotpryde.com", path : "/healthcheck" },
+    { fqdn : "grafana.elliotpryde.com", path : "/api/health" },
+    { fqdn : "heimdall.elliotpryde.com", path : "/" }
+  ]
 }
 
 variable "nas_public_ip" {
