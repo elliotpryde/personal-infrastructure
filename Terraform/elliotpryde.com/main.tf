@@ -23,3 +23,20 @@ resource "aws_route53_health_check" "nas-health-checks-aggregate" {
   child_health_threshold = "1"
   child_healthchecks     = aws_route53_health_check.nas-health-checks[*].id
 }
+
+resource "aws_cloudwatch_metric_alarm" "nas-http-health-check-alarm" {
+  alarm_name          = "nas-http-health-check-alarm"
+  namespace           = "AWS/Route53"
+  metric_name         = "HealthCheckStatus"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "1"
+  period              = "60"
+  statistic           = "Minimum"
+  threshold           = "1"
+  unit                = "None"
+  alarm_description   = "Alert when all NAS services are unavailable."
+
+  dimensions = {
+    HealthCheckId = aws_route53_health_check.nas-health-checks-aggregate.id
+  }
+}
