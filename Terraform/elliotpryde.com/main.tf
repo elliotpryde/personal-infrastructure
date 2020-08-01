@@ -17,3 +17,9 @@ resource "aws_route53_health_check" "nas-health-checks" {
   failure_threshold = "5"
   request_interval  = "30"
 }
+
+resource "aws_route53_health_check" "nas-health-checks-aggregate" {
+  type                   = "CALCULATED"
+  child_health_threshold = "1"
+  child_healthchecks     = aws_route53_health_check.nas-health-checks[*].id
+}
