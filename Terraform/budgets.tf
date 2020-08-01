@@ -8,7 +8,7 @@ resource "aws_budgets_budget" "total-cost" {
   budget_type  = "COST"
   limit_amount = local.aws_budget_usd
   limit_unit   = "USD"
-  time-unit = "MONTHLY"
+  time_unit = "MONTHLY"
   time_period_start = local.aws_budget_start
 
   notification {
