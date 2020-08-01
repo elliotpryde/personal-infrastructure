@@ -6,7 +6,7 @@ resource "time_static" "budget-start" {}
 resource "aws_budgets_budget" "total-cost" {
   name              = "budget-total"
   budget_type       = "COST"
-  limit_amount      = local.aws_budget_usd
+  limit_amount      = format("%.1f", local.aws_budget_usd) # workaround for https://github.com/terraform-providers/terraform-provider-aws/issues/10692
   limit_unit        = "USD"
   time_unit         = "MONTHLY"
   time_period_start = local.aws_budget_start
