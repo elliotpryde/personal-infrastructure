@@ -1,6 +1,7 @@
 locals {
-  aws_budget_usd = "5"
-  aws_budget_start = formatdate("YYYY-MM-DD_hh:mm", time_static.budget-start.rfc3339)
+  aws_default_region = "eu-west-2"
+  aws_budget_usd     = "5"
+  aws_budget_start   = formatdate("YYYY-MM-DD_hh:mm", time_static.budget-start.rfc3339)
 }
 
 variable "azure_client_id" {
@@ -29,11 +30,11 @@ variable "nas_public_ip" {
 }
 
 variable "protonmail_elliotpryde_com_verification_string" {
-  type = string
+  type        = string
   description = "The domain verification data provided at https://mail.protonmail.com/domains"
 }
 
 variable "my_email_address" {
-  type = string
+  type        = string
   description = "The email address that I will receive alerts/notifications on."
 }

@@ -4,11 +4,11 @@
 resource "time_static" "budget-start" {}
 
 resource "aws_budgets_budget" "total-cost" {
-  name = "budget-total"
-  budget_type  = "COST"
-  limit_amount = local.aws_budget_usd
-  limit_unit   = "USD"
-  time_unit = "MONTHLY"
+  name              = "budget-total"
+  budget_type       = "COST"
+  limit_amount      = local.aws_budget_usd
+  limit_unit        = "USD"
+  time_unit         = "MONTHLY"
   time_period_start = local.aws_budget_start
 
   notification {
