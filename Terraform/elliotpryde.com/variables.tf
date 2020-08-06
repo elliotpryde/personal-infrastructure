@@ -15,12 +15,12 @@ locals {
     }
   ]
   nas_service_endpoints = [
-    { fqdn : "plex.elliotpryde.com", path : "/identity" },
-    { fqdn : "homeassistant.elliotpryde.com", path : "/" },
+    # { fqdn : "plex.elliotpryde.com", path : "/identity" },
+    # { fqdn : "homeassistant.elliotpryde.com", path : "/" },
     { fqdn : "wallabag.elliotpryde.com", path : "/" },
-    { fqdn : "miniflux.elliotpryde.com", path : "/healthcheck" },
-    { fqdn : "grafana.elliotpryde.com", path : "/api/health" },
-    { fqdn : "heimdall.elliotpryde.com", path : "/" }
+    # { fqdn : "miniflux.elliotpryde.com", path : "/healthcheck" },
+    # { fqdn : "grafana.elliotpryde.com", path : "/api/health" },
+    # { fqdn : "heimdall.elliotpryde.com", path : "/" }
   ]
 }
 
