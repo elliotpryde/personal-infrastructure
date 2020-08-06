@@ -10,7 +10,7 @@ resource "aws_route53_health_check" "nas-health-checks" {
 
 resource "aws_route53_health_check" "nas-health-checks-aggregate" {
   type                   = "CALCULATED"
-  child_health_threshold = "2"
+  child_health_threshold = length(local.nas_service_endpoints)
   child_healthchecks     = aws_route53_health_check.nas-health-checks[*].id
 }
 
