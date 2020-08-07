@@ -1,7 +1,8 @@
 locals {
-  aws_default_region = "eu-west-2"
-  aws_budget_usd     = "5"
-  aws_budget_start   = formatdate("YYYY-MM-DD_hh:mm", time_static.budget-start.rfc3339)
+  aws_default_region     = "eu-west-2"
+  aws_budget_usd         = "5"
+  aws_budget_start       = formatdate("YYYY-MM-DD_hh:mm", time_static.budget-start.rfc3339)
+  azure_default_location = "UK South"
 }
 
 variable "azure_client_id" {
