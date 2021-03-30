@@ -9,7 +9,6 @@ terraform {
 }
 
 provider "azurerm" {
-  version         = "~> 2.20"
   client_id       = var.azure_client_id
   client_secret   = var.azure_client_secret
   subscription_id = var.azure_subscription_id
@@ -19,13 +18,10 @@ provider "azurerm" {
 }
 
 provider "aws" {
-  version = "~> 2.70"
   region  = "eu-west-2"
 }
 
-provider "time" {
-  version = "~> 0.5"
-}
+provider "time" {}
 
 module "elliotpryde-com" {
   source                                         = "./elliotpryde.com"
