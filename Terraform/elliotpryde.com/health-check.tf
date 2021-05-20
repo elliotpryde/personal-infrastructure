@@ -16,7 +16,7 @@ resource "aws_route53_health_check" "nas-health-checks-aggregate" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "nas-http-health-check-alarm" {
-  count = local.aggregate_health_check_is_active || length(local.nas_service_endpoints) > 0
+  count = local.aggregate_health_check_is_active || (length(local.nas_service_endpoints) > 0) ? 1 : 0
   alarm_name          = "nas-http-health-check-alarm"
   namespace           = "AWS/Route53"
   metric_name         = "HealthCheckStatus"
