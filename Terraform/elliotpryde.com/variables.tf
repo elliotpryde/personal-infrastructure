@@ -14,6 +14,7 @@ locals {
       data     = "protonmail3.domainkey.d4zotdvax2nt4447zdfl5bkm6uc3lozcidvlw5jdxq3hhurmq3u5q.domains.proton.ch."
     }
   ]
+
   nas_service_endpoints = [
     # { fqdn : "plex.elliotpryde.com", path : "/identity" },
     # { fqdn : "homeassistant.elliotpryde.com", path : "/" },
@@ -22,6 +23,13 @@ locals {
     # { fqdn : "grafana.elliotpryde.com", path : "/api/health" },
     # { fqdn : "heimdall.elliotpryde.com", path : "/" }
   ]
+  aggregate_health_check_is_active = var.enable_aggregate_health_check && length(aws_route53_health_check.nas-health-checks) > 1
+  // use the aggregate health check for the alarm if it's enabled, otherwise use the first NAS service endpoint health check
+  health_check_to_use_for_cloudwatch_alarm = (
+    local.aggregate_health_check_is_active ?
+    aws_route53_health_check.nas-health-checks-aggregate.id :
+    aws_route53_health_check.nas-health-checks[0]
+  )
 }
 
 variable "nas_public_ip" {
@@ -36,5 +44,9 @@ variable "protonmail_elliotpryde_com_verification_string" {
 
 variable "enable_aggregate_health_check" {
   type = bool
-  description = "Enable a Route 53 health check which only passes if all other health checks pass"
+  description = <<EOF
+Enable a Route 53 health check which only passes if all other health checks pass.
+
+The health check will be disabled regardless of this setting if you only have 1 NAS service endpoint health check in total.
+EOF
 }
