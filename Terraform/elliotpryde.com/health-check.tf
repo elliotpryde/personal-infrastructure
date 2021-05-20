@@ -9,7 +9,7 @@ resource "aws_route53_health_check" "nas-health-checks" {
 }
 
 resource "aws_route53_health_check" "nas-health-checks-aggregate" {
-  count                  = (var.enable_aggregate_health_check && aws_route53_health_check.nas-health-checks.count > 1) ? 1 : 0
+  count                  = (var.enable_aggregate_health_check && length(aws_route53_health_check.nas-health-checks) > 1) ? 1 : 0
   type                   = "CALCULATED"
   child_health_threshold = length(local.nas_service_endpoints)
   child_healthchecks     = aws_route53_health_check.nas-health-checks[*].id
