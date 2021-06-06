@@ -29,6 +29,6 @@ resource "aws_cloudwatch_metric_alarm" "nas-http-health-check-alarm" {
   alarm_description   = "Alert when all NAS services are unavailable."
 
   dimensions = {
-    HealthCheckId = local.health_check_to_use_for_cloudwatch_alarm
+    HealthCheckId = local.health_check_to_use_for_cloudwatch_alarm.id
   }
 }
