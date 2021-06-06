@@ -1,7 +1,5 @@
-# include an Azure budget once that feature is available
-# https://github.com/terraform-providers/terraform-provider-azurerm/issues/2677
-
-resource "time_static" "budget-start" {}
+resource "time_static" "budget-start" {
+}
 
 resource "aws_budgets_budget" "total-cost" {
   name              = "budget-total"
@@ -25,5 +23,31 @@ resource "aws_budgets_budget" "total-cost" {
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
     subscriber_email_addresses = [var.my_email_address]
+  }
+}
+
+resource "azurerm_consumption_budget_subscription" "total-cost" {
+  name            = "budget-total"
+  subscription_id = data.azurerm_subscription.current.subscription_id
+
+  amount     = local.azure_budget_gbp
+  time_grain = "Monthly"
+
+  time_period {
+    start_date = local.azure_budget_start
+  }
+
+  notification {
+    enabled        = true
+    threshold      = 60.0
+    operator       = "GreaterThan"
+    contact_emails = [var.my_email_address]
+  }
+
+  notification {
+    enabled        = true
+    threshold      = 100.0
+    operator       = "GreaterThan"
+    contact_emails = [var.my_email_address]
   }
 }

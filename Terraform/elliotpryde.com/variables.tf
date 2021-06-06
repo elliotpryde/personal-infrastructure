@@ -43,7 +43,7 @@ variable "protonmail_elliotpryde_com_verification_string" {
 }
 
 variable "enable_aggregate_health_check" {
-  type = bool
+  type        = bool
   description = <<EOF
 Enable a Route 53 health check which only passes if all other health checks pass.
 
