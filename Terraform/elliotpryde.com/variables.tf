@@ -15,7 +15,7 @@ locals {
     }
   ]
 
-  nas_service_endpoints = [
+  nas_service_health_endpoints = disable_all_health_checks ? [] : [
     # { fqdn : "plex.elliotpryde.com", path : "/identity" },
     # { fqdn : "homeassistant.elliotpryde.com", path : "/" },
     { fqdn : "wallabag.elliotpryde.com", path : "/" },
@@ -23,7 +23,7 @@ locals {
     # { fqdn : "grafana.elliotpryde.com", path : "/api/health" },
     # { fqdn : "heimdall.elliotpryde.com", path : "/" }
   ]
-  aggregate_health_check_is_active = var.enable_aggregate_health_check && (length(local.nas_service_endpoints) > 1)
+  aggregate_health_check_is_active = var.enable_aggregate_health_check && (length(local.nas_service_health_endpoints) > 1)
   // use the aggregate health check for the alarm if it's enabled, otherwise use the first NAS service endpoint health check
   health_check_to_use_for_cloudwatch_alarm = (
     local.aggregate_health_check_is_active ?
@@ -49,4 +49,9 @@ Enable a Route 53 health check which only passes if all other health checks pass
 
 The health check will be disabled regardless of this setting if you only have 1 NAS service endpoint health check in total.
 EOF
+}
+
+variable "disable_all_health_checks" {
+  type        = bool
+  description = "Removes all Route 53 health checks. If they're not being used then there's no need to pay for them."
 }

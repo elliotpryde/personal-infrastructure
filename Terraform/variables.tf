@@ -42,3 +42,8 @@ variable "my_email_address" {
   type        = string
   description = "The email address that I will receive alerts/notifications on."
 }
+
+variable "disable_all_health_checks" {
+  type        = bool
+  description = "Removes all Route 53 health checks. If they're not being used then there's no need to pay for them."
+}
