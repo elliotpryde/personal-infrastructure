@@ -25,7 +25,7 @@ locals {
   ]
   aggregate_health_check_is_active = var.enable_aggregate_health_check && (length(local.nas_service_health_endpoints) > 1)
   // use the aggregate health check for the alarm if it's enabled, otherwise use the first NAS service endpoint health check
-  health_check_to_use_for_cloudwatch_alarm = (
+  health_check_to_use_for_cloudwatch_alarm = var.disable_all_health_checks ? null : (
     local.aggregate_health_check_is_active ?
     aws_route53_health_check.nas-health-checks-aggregate[0].id :
     aws_route53_health_check.nas-health-checks[0]
