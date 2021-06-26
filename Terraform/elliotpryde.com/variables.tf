@@ -15,7 +15,7 @@ locals {
     }
   ]
 
-  nas_service_health_endpoints = disable_all_health_checks ? [] : [
+  nas_service_health_endpoints = var.disable_all_health_checks ? [] : [
     # { fqdn : "plex.elliotpryde.com", path : "/identity" },
     # { fqdn : "homeassistant.elliotpryde.com", path : "/" },
     { fqdn : "wallabag.elliotpryde.com", path : "/" },
