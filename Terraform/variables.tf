@@ -6,6 +6,10 @@ locals {
   # first day of the month rfc3339
   azure_budget_start     = "${time_static.budget-start.year}-${format("%02v", time_static.budget-start.month)}-01T00:00:00Z"
   azure_default_location = "UK South"
+  common_tags = {
+    owner       = var.my_email_address
+    environment = "production"
+  }
 }
 
 variable "azure_client_id" {

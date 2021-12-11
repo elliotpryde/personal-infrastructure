@@ -1,6 +1,9 @@
 resource "azurerm_resource_group" "nas" {
   name     = "nas"
   location = local.azure_default_location
+  tags     = merge(local.common_tags, {
+    description = "Any resources related to my home NAS server."
+  })
 }
 
 resource "azurerm_storage_account" "nas-backups" {
