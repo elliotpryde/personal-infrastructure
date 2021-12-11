@@ -1,6 +1,17 @@
+resource "azurerm_policy_set_definition" "mandatory_resource_group_tags" {
+  name         = "Audit-ResourceGroup-MandatoryTags"
+  display_name = "Audit - Mandatory resource group tags"
+  description  = "Audit all resource groups for a set of mandatory tags"
+  policy_type  = "Custom"
+
+  policy_definition_reference {
+    policy_definition_id = azurerm_policy_definition.mandatory_resource_group_tag.id
+  }
+}
+
 resource "azurerm_policy_definition" "mandatory_resource_group_tag" {
   name         = "Audit-ResourceGroup-MandatoryTag"
-  display_name = "Audit - Mandatory resource group tags"
+  display_name = "Audit - A mandatory resource group tag"
   description  = "Audit all resource groups for a mandatory tag"
   policy_type  = "Custom"
   mode         = "All"
