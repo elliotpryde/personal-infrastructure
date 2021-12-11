@@ -15,15 +15,18 @@ sp_object_id=$(az ad sp list --all --filter "displayName eq 'terraform-cloud'" -
 # create a role to manage policy definitions and assignment
 az role definition create --role-definition '{
   "Name": "Policy Admin",
-  "Description": "Perform any actions with policy definitions and assignments.",
+  "Description": "Perform any actions with policy definitions, policy assignments, and policy set definitions.",
   "Actions": [
     "Microsoft.Authorization/policyAssignments/read",
     "Microsoft.Authorization/policyAssignments/write",
-    "Microsoft.Authorization/policyAssignments/delete",
     "Microsoft.Authorization/policyAssignments/exempt/action",
+    "Microsoft.Authorization/policyAssignments/delete",
     "Microsoft.Authorization/policyDefinitions/read",
+    "Microsoft.Authorization/policyDefinitions/delete",
     "Microsoft.Authorization/policyDefinitions/write",
-    "Microsoft.Authorization/policyDefinitions/delete"
+    "Microsoft.Authorization/policySetDefinitions/read",
+    "Microsoft.Authorization/policySetDefinitions/write",
+    "Microsoft.Authorization/policySetDefinitions/delete"
   ],
   "AssignableScopes": ["/subscriptions/'${subscription_id}'"]
 }'

@@ -10,6 +10,16 @@ locals {
     owner       = var.my_email_address
     environment = "production"
   }
+
+  mandatory_rsg_tag_policy_definition_params = jsonencode({
+    "tagName" : {
+      "type" : "String",
+      "metadata" : {
+        "displayName" : "Tag Name",
+        "description" : "Name of the tag, such as 'environment'"
+      }
+    }
+  })
 }
 
 variable "azure_client_id" {
