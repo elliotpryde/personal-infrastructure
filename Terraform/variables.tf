@@ -53,5 +53,5 @@ variable "azure_mandatory_resource_group_tags" {
 A list of tags which must be present across all resource groups.
 Any new resources groups created without these tags will be flagged with a warning event in the activity log.
 EOF
-  type = list(string)
+  type = set(string)
 }
