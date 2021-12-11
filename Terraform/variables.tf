@@ -51,7 +51,7 @@ variable "disable_all_health_checks" {
 variable "azure_mandatory_resource_group_tags" {
   description = <<EOF
 A list of tags which must be present across all resource groups.
-Any new resources groups created without these tags will be flagged with a warning event in the activity log.
+Resource without these tags will be flagged with a warning event in the activity log and on the policy dashboard.
 EOF
   type = set(string)
 }
