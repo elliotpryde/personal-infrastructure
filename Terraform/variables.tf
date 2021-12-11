@@ -47,3 +47,11 @@ variable "disable_all_health_checks" {
   type        = bool
   description = "Removes all Route 53 health checks. If they're not being used then there's no need to pay for them."
 }
+
+variable "azure_mandatory_resource_group_tags" {
+  description = <<EOF
+A list of tags which must be present across all resource groups.
+Any new resources groups created without these tags will be flagged with a warning event in the activity log.
+EOF
+  type = list(string)
+}

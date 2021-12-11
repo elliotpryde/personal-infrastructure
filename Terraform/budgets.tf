@@ -28,7 +28,7 @@ resource "aws_budgets_budget" "total-cost" {
 
 resource "azurerm_consumption_budget_subscription" "total-cost" {
   name            = "budget-total"
-  subscription_id = data.azurerm_subscription.current.subscription_id
+  subscription_id = data.azurerm_client_config.subscription_id
 
   amount     = local.azure_budget_gbp
   time_grain = "Monthly"
