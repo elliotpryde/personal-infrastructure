@@ -12,11 +12,11 @@ resource "azurerm_policy_definition" "mandatory_resource_group_tag" {
           "field": "type",
           "equals": "Microsoft.Resources/subscriptions/resourceGroups"
         },
-        "not": {
+        {
           "field": "[concat('tags[', parameters('tagName'), ']')]",
-          "exists": "true"
+          "exists": "false"
         }
-      }
+      ]
     },
     "then": {
       "effect": "audit"
