@@ -44,7 +44,7 @@ resource "azurerm_subscription_policy_assignment" "mandatory_resource_group_tag"
   display_name         = "Mandatory tag '${each.value}'"
   description          = "Assigning the mandatory tag policy for'${each.value}'"
   policy_definition_id = azurerm_policy_definition.mandatory_resource_group_tag.id
-  subscription_id      = data.azurerm_client_config.this.subscription_id
+  subscription_id      = "/subscriptions/${data.azurerm_client_config.this.subscription_id}"
   parameters           = <<PARAMETERS
   {
     "tagName": {
