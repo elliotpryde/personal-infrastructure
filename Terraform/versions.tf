@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.47.0"
+      version = "~> 3.69.0"
     }
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -10,7 +10,7 @@ terraform {
     }
     time = {
       source  = "hashicorp/time"
-      version = "~> 0.7.1"
+      version = "~> 0.7.2"
     }
   }
   required_version = ">= 1.0"
