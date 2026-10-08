@@ -25,29 +25,3 @@ resource "aws_budgets_budget" "total-cost" {
     subscriber_email_addresses = [var.my_email_address]
   }
 }
-
-resource "azurerm_consumption_budget_subscription" "total-cost" {
-  name            = "budget-total"
-  subscription_id = data.azurerm_client_config.this.subscription_id
-
-  amount     = local.azure_budget_gbp
-  time_grain = "Monthly"
-
-  time_period {
-    start_date = local.azure_budget_start
-  }
-
-  notification {
-    enabled        = true
-    threshold      = 60.0
-    operator       = "GreaterThan"
-    contact_emails = [var.my_email_address]
-  }
-
-  notification {
-    enabled        = true
-    threshold      = 100.0
-    operator       = "GreaterThan"
-    contact_emails = [var.my_email_address]
-  }
-}
