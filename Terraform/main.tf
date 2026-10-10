@@ -14,8 +14,6 @@ provider "aws" {
   region = local.aws_default_region
 }
 
-provider "time" {}
-
 module "elliotpryde-com" {
   source                                         = "./elliotpryde.com"
   nas_public_ip                                  = var.nas_public_ip

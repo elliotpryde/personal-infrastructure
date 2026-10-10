@@ -1,7 +1,8 @@
 locals {
   aws_default_region = "eu-west-2"
   aws_budget_usd     = "5"
-  aws_budget_start   = formatdate("YYYY-MM-DD_hh:mm", time_static.budget-start.rfc3339)
+  # the budget's existing start date; changing it would replace the budget
+  aws_budget_start = "2021-06-06_13:22"
 }
 
 variable "nas_public_ip" {
@@ -17,6 +18,8 @@ variable "protonmail_elliotpryde_com_verification_string" {
 variable "my_email_address" {
   type        = string
   description = "The email address that I will receive alerts/notifications on."
+  # plans are posted as public pull request comments
+  sensitive = true
 }
 
 variable "disable_all_health_checks" {

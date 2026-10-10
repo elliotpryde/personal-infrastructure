@@ -7,11 +7,6 @@ locals {
 }
 
 import {
-  to = time_static.budget-start
-  id = "2021-06-06T13:22:47Z"
-}
-
-import {
   to = aws_budgets_budget.total-cost
   id = "${local.aws_account_id}:budget-total"
 }
