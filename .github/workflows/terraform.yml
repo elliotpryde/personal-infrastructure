@@ -19,7 +19,6 @@ env:
   TF_INPUT: "false"
   AWS_REGION: eu-west-2
   TF_VAR_my_email_address: ${{ secrets.TF_VAR_MY_EMAIL_ADDRESS }}
-  TF_VAR_nas_public_ip: ${{ secrets.TF_VAR_NAS_PUBLIC_IP }}
   TF_VAR_protonmail_elliotpryde_com_verification_string: ${{ secrets.TF_VAR_PROTONMAIL_ELLIOTPRYDE_COM_VERIFICATION_STRING }}
   TF_VAR_disable_all_health_checks: ${{ vars.TF_VAR_DISABLE_ALL_HEALTH_CHECKS }}
 

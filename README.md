@@ -2,7 +2,8 @@
 
 Terraform for the cloud side of my homelab and personal projects, all in AWS (`eu-west-2`):
 
-* DNS for elliotpryde.com: Proton Mail records and the wildcard record for services on the NAS
+* DNS for elliotpryde.com: the hosted zone and Proton Mail records. The `*.elliotpryde.com` record for services on the
+  NAS is kept up to date by the ddns_updater container on the NAS, not by Terraform
 * Route 53 health checks for NAS services (currently switched off)
 * An IAM user that lets Traefik on the NAS complete Let's Encrypt DNS challenges
 * A monthly AWS budget with email alerts
@@ -32,7 +33,7 @@ for reference.
    creates the state bucket, the GitHub OIDC provider and the plan and apply roles, then prints the values for step 2.
    Terraform took those resources over on its first apply, so later changes to them belong in `ci.tf`.
 2. **GitHub → Settings → Secrets and variables → Actions:** set the secrets and variables the script printed. Add the
-   three secrets under **Secrets and variables → Dependabot** too, because Dependabot pull requests can't read Actions
+   two secrets under **Secrets and variables → Dependabot** too, because Dependabot pull requests can't read Actions
    secrets.
 3. **GitHub → Settings → Environments:** create `production`, with deployment branches limited to `master`.
 4. **GitHub → Settings → Branches:** protect `master`. Require a pull request, require the `plan` status check, and

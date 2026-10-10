@@ -1,5 +1,4 @@
 locals {
-  dns_ttl = 120
   dkim_records = [
     {
       hostname = "protonmail._domainkey",
@@ -30,11 +29,6 @@ locals {
     aws_route53_health_check.nas-health-checks-aggregate[0].id :
     aws_route53_health_check.nas-health-checks[0]
   )
-}
-
-variable "nas_public_ip" {
-  type        = string
-  description = "The public IP address of my NAS"
 }
 
 variable "protonmail_elliotpryde_com_verification_string" {
