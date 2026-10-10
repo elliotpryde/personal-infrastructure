@@ -19,7 +19,6 @@ Everything goes through pull requests against `master`:
    single comment on the pull request that is updated on every push.
 2. Merging applies it. The `apply` job runs in the `production` GitHub environment, the only thing allowed to assume the
    apply role.
-3. A nightly job runs a plan against `master` and fails if the real infrastructure has drifted from it.
 
 GitHub Actions authenticates to AWS with OIDC (`Terraform/ci.tf`), so there are no AWS access keys stored in GitHub.
 State lives in the `elliotpryde-terraform-state` S3 bucket, locked with an S3 lock file.
