@@ -95,8 +95,6 @@ ensure_role github-terraform-apply "repo:${REPO}:environment:production" arn:aws
 TXT_VALUES="$(aws route53 list-resource-record-sets --hosted-zone-id "$ZONE_ID" \
   --query "ResourceRecordSets[?Name=='elliotpryde.com.' && Type=='TXT'].ResourceRecords[].Value" --output text)"
 VERIFICATION="$(tr '\t' '\n' <<<"$TXT_VALUES" | tr -d '"' | grep -v '^v=spf1' || true)"
-NAS_IP="$(aws route53 list-resource-record-sets --hosted-zone-id "$ZONE_ID" \
-  --query "ResourceRecordSets[?Name=='\\052.elliotpryde.com.' && Type=='A'].ResourceRecords[0].Value" --output text)"
 HEALTH_CHECKS="$(aws route53 list-health-checks --query 'length(HealthChecks)' --output text)"
 if [[ "$HEALTH_CHECKS" == "0" ]]; then DISABLE_HEALTH_CHECKS=true; else DISABLE_HEALTH_CHECKS=false; fi
 
@@ -104,9 +102,8 @@ cat <<EOF
 
 Done. Now set these in GitHub, under Settings -> Secrets and variables -> Actions:
 
-  Secrets (and the same three under Secrets and variables -> Dependabot):
+  Secrets (and the same two under Secrets and variables -> Dependabot):
     TF_VAR_MY_EMAIL_ADDRESS                               <the address budget alerts go to>
-    TF_VAR_NAS_PUBLIC_IP                                  ${NAS_IP}
     TF_VAR_PROTONMAIL_ELLIOTPRYDE_COM_VERIFICATION_STRING ${VERIFICATION}
 
   Variables:

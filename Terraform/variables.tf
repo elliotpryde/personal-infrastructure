@@ -5,11 +5,6 @@ locals {
   aws_budget_start = "2021-06-06_13:22"
 }
 
-variable "nas_public_ip" {
-  type        = string
-  description = "The public IP address of my NAS"
-}
-
 variable "protonmail_elliotpryde_com_verification_string" {
   type        = string
   description = "The domain verification data provided at https://mail.protonmail.com/domains"

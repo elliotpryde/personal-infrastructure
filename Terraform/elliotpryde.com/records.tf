@@ -1,11 +1,9 @@
-# TODO: This could eventually be replaced with DDNS
-resource "aws_route53_record" "traefik-wildcard" {
-  zone_id = aws_route53_zone.elliotpryde-com.zone_id
-  name    = "*.${aws_route53_zone.elliotpryde-com.name}"
-  type    = "A"
-  ttl     = local.dns_ttl
+# The *.elliotpryde.com wildcard record pointing at the NAS is owned by the ddns_updater container on the NAS, which
+# keeps its IP up to date. Terraform used to manage it with a static IP; this hands it over without deleting it.
+removed {
+  from = aws_route53_record.traefik-wildcard
 
-  records = [
-    var.nas_public_ip
-  ]
+  lifecycle {
+    destroy = false
+  }
 }
