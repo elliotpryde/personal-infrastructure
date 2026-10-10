@@ -40,6 +40,8 @@ them all.
 
 The uptime monitoring functions:
 
+* `health-probe` requests each service in `uptime_services` (in `Terraform/uptime-monitoring.tf`) every minute and
+  records an `Up` metric per service and a `ServicesDown` count.
 * `alert-notifier` sends the `uptime-services-down` alarm's state changes to ntfy.sh, naming the services that are down,
   along with kill switch notifications. To subscribe, add the topic from this command on the `https://ntfy.sh` server
   in the ntfy app:
