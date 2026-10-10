@@ -1,5 +1,5 @@
 # The state bucket, GitHub OIDC provider and the two roles below are first created by bootstrap/bootstrap.sh, because
-# GitHub Actions needs them before it can run Terraform at all. imports.tf brings them under Terraform's management.
+# GitHub Actions needs them before it can run Terraform at all. They were imported on the first apply.
 locals {
   github_repository    = "elliotpryde/personal-infrastructure"
   terraform_state_key  = "personal-infrastructure/terraform.tfstate"

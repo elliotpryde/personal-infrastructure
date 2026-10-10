@@ -5,7 +5,7 @@
 #   * the S3 bucket holding Terraform state
 #   * the GitHub Actions OIDC provider
 #   * the github-terraform-plan and github-terraform-apply roles
-# Terraform then takes them over through the import blocks in Terraform/imports.tf, so make changes there, not here.
+# Terraform then takes them over (Terraform/ci.tf), so make changes there, not here.
 #
 # Run it in AWS CloudShell (eu-west-2), which is already logged in. Re-running it is safe: anything that already
 # exists is left alone. At the end it prints the values to set as GitHub Actions secrets and variables.

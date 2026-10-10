@@ -1,6 +1,3 @@
-resource "time_static" "budget-start" {
-}
-
 resource "aws_budgets_budget" "total-cost" {
   name              = "budget-total"
   budget_type       = "COST"

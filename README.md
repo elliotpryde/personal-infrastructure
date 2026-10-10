@@ -30,7 +30,7 @@ for reference.
 
 1. **Bootstrap AWS.** In AWS CloudShell (`eu-west-2`), run [`bootstrap/bootstrap.sh`](bootstrap/bootstrap.sh). It
    creates the state bucket, the GitHub OIDC provider and the plan and apply roles, then prints the values for step 2.
-   Terraform takes those resources over through `Terraform/imports.tf`, so later changes to them belong in `ci.tf`.
+   Terraform took those resources over on its first apply, so later changes to them belong in `ci.tf`.
 2. **GitHub → Settings → Secrets and variables → Actions:** set the secrets and variables the script printed. Add the
    three secrets under **Secrets and variables → Dependabot** too, because Dependabot pull requests can't read Actions
    secrets.
@@ -40,6 +40,6 @@ for reference.
 5. **GitHub → Settings → Actions → General:** require approval for workflows from all outside contributors.
 
 The state used to live in Terraform Cloud. Rather than migrating it, the existing AWS resources were imported into fresh
-S3 state with the import blocks in `Terraform/imports.tf`, which can be deleted after the first apply. The old Terraform
-Cloud workspace and the Azure account (which still holds a budget alert and some unused resources from old NAS backups)
-are no longer used by this repository and can be deleted or closed at any time.
+S3 state with import blocks on the first apply from GitHub Actions. The old Terraform Cloud workspace and the Azure
+account (which still holds a budget alert and some unused resources from old NAS backups) are no longer used by this
+repository and can be deleted or closed at any time.
