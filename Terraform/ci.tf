@@ -1,9 +1,8 @@
 locals {
-  github_repository     = "elliotpryde/personal-infrastructure"
-  terraform_state_key   = "personal-infrastructure/terraform.tfstate"
-  github_oidc_subject   = "token.actions.githubusercontent.com:sub"
-  github_oidc_audience  = "token.actions.githubusercontent.com:aud"
-  github_default_branch = "master"
+  github_repository    = "elliotpryde/personal-infrastructure"
+  terraform_state_key  = "personal-infrastructure/terraform.tfstate"
+  github_oidc_subject  = "token.actions.githubusercontent.com:sub"
+  github_oidc_audience = "token.actions.githubusercontent.com:aud"
 }
 
 # Remote state for this repository's Terraform, written by GitHub Actions.
@@ -81,7 +80,7 @@ resource "aws_iam_openid_connect_provider" "github-actions" {
   ]
 }
 
-# Used for plans on pull requests and for scheduled drift detection
+# Used for plans on pull requests
 resource "aws_iam_role" "github-terraform-plan" {
   name = "github-terraform-plan"
   path = "/github/"
@@ -96,10 +95,7 @@ resource "aws_iam_role" "github-terraform-plan" {
         Condition = {
           StringEquals = {
             (local.github_oidc_audience) = "sts.amazonaws.com"
-            (local.github_oidc_subject) = [
-              "repo:${local.github_repository}:pull_request",
-              "repo:${local.github_repository}:ref:refs/heads/${local.github_default_branch}"
-            ]
+            (local.github_oidc_subject)  = "repo:${local.github_repository}:pull_request"
           }
         }
       }
