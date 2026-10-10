@@ -9,6 +9,11 @@
 #
 # To resume, run the Terraform workflow. The plan shows the pause as drift (reserved concurrency, the schedule's state
 # and the alarm's actions_enabled), and applying it puts everything back.
+#
+# The kill switch confirms both on the uptime-alerts topic. Once every step of a pause has worked, it records "paused"
+# in the uptime-kill-switch-state parameter and publishes "Kill switch activated". After every apply, the Terraform
+# workflow invokes it with {"action": "check"}; if the state is "paused" and everything has been restored, it records
+# "active" and publishes "Kill switch deactivated".
 
 resource "aws_sns_topic" "uptime-cost-guard" {
   name = "uptime-cost-guard"
@@ -122,9 +127,42 @@ resource "aws_iam_role_policy" "uptime-kill-switch" {
         Effect   = "Allow"
         Action   = "cloudwatch:DisableAlarmActions"
         Resource = aws_cloudwatch_metric_alarm.uptime-services-down.arn
+      },
+      # The rest are for confirming a pause and checking it's been undone
+      {
+        Effect   = "Allow"
+        Action   = "lambda:GetFunctionConcurrency"
+        Resource = [for name in local.uptime_pausable_functions : aws_lambda_function.uptime[name].arn]
+      },
+      {
+        # DescribeAlarms doesn't support resource-level permissions
+        Effect   = "Allow"
+        Action   = "cloudwatch:DescribeAlarms"
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter", "ssm:PutParameter"]
+        Resource = aws_ssm_parameter.uptime-kill-switch-state.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = aws_sns_topic.uptime-alerts.arn
       }
     ]
   })
+}
+
+# "active" or "paused", written by the kill switch
+resource "aws_ssm_parameter" "uptime-kill-switch-state" {
+  name  = "/uptime-monitoring/kill-switch-state"
+  type  = "String"
+  value = "active"
+
+  lifecycle {
+    ignore_changes = [value]
+  }
 }
 
 # The notifier says a pause has started, not whether it worked, so this tells me if the kill switch fails

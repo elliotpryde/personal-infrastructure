@@ -62,9 +62,11 @@ locals {
       timeout              = 30
       reserved_concurrency = -1
       environment = {
-        FUNCTIONS     = join(",", local.uptime_pausable_functions)
-        SCHEDULE_NAME = local.uptime_probe_schedule_name
-        ALARM_NAME    = local.uptime_alarm_name
+        FUNCTIONS        = join(",", local.uptime_pausable_functions)
+        SCHEDULE_NAME    = local.uptime_probe_schedule_name
+        ALARM_NAME       = local.uptime_alarm_name
+        STATE_PARAMETER  = aws_ssm_parameter.uptime-kill-switch-state.name
+        ALERTS_TOPIC_ARN = aws_sns_topic.uptime-alerts.arn
       }
     }
   }
