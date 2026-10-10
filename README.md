@@ -7,7 +7,8 @@ Terraform for the cloud side of my homelab and personal projects, all in AWS (`e
 * Route 53 health checks for NAS services (currently switched off)
 * Uptime monitoring for NAS services (`Terraform/uptime-monitoring.tf`): a Lambda probes each service every minute,
   a CloudWatch alarm alerts through ntfy.sh and email, and a public function URL serves a 7-day uptime chart for Dashy.
-  The Lambda code is in `tools/` and is deployed separately from Terraform
+  The Lambda code is in `tools/` and is deployed separately from Terraform. A kill switch
+  (`Terraform/uptime-cost-guard.tf`) pauses it all if the function URL is abused or the account goes over budget
 * An IAM user that lets Traefik on the NAS complete Let's Encrypt DNS challenges
 * A monthly AWS budget with email alerts
 * The S3 state bucket and GitHub Actions OIDC roles used to run this Terraform (`Terraform/ci.tf`)

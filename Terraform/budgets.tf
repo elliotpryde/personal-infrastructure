@@ -20,5 +20,10 @@ resource "aws_budgets_budget" "total-cost" {
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
     subscriber_email_addresses = [var.my_email_address]
+    # pauses uptime monitoring, see uptime-cost-guard.tf
+    subscriber_sns_topic_arns = [aws_sns_topic.uptime-cost-guard.arn]
   }
+
+  # Budgets checks it can publish to the topic when the notification is saved
+  depends_on = [aws_sns_topic_policy.uptime-cost-guard]
 }
