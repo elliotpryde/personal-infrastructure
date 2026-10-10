@@ -4,7 +4,7 @@
 # a ServicesDown count. One alarm on ServicesDown notifies the uptime-alerts topic, which emails me and triggers
 # alert-notifier to push a notification through ntfy.sh. uptime-status serves a 7-day uptime chart for Dashy.
 #
-# uptime-kill-switch pauses all of this if it starts costing money, see uptime-cost-guard.tf.
+# uptime-kill-switch pauses the probe and uptime-status if they start costing money, see uptime-cost-guard.tf.
 #
 # The Lambda code lives in tools/<function name> and is deployed by .github/workflows/lambdas.yml, not by Terraform.
 # Terraform creates each function with a placeholder and then ignores code changes.
@@ -41,6 +41,8 @@ locals {
         SERVICES             = jsonencode(local.uptime_services)
         NTFY_URL             = "https://ntfy.sh"
         NTFY_TOPIC_PARAMETER = aws_ssm_parameter.uptime-ntfy-topic.name
+        SERVICES_ALARM_NAME  = local.uptime_alarm_name
+        COST_GUARD_TOPIC_ARN = aws_sns_topic.uptime-cost-guard.arn
       }
     }
     uptime-status = {
@@ -60,17 +62,16 @@ locals {
       timeout              = 30
       reserved_concurrency = -1
       environment = {
-        FUNCTIONS            = join(",", local.uptime_pausable_functions)
-        SCHEDULE_NAME        = local.uptime_probe_schedule_name
-        ALARM_NAME           = local.uptime_alarm_name
-        NTFY_URL             = "https://ntfy.sh"
-        NTFY_TOPIC_PARAMETER = aws_ssm_parameter.uptime-ntfy-topic.name
+        FUNCTIONS     = join(",", local.uptime_pausable_functions)
+        SCHEDULE_NAME = local.uptime_probe_schedule_name
+        ALARM_NAME    = local.uptime_alarm_name
       }
     }
   }
 
-  # Names rather than references, because the kill switch is in the same for_each as the functions it pauses
-  uptime_pausable_functions  = ["health-probe", "alert-notifier", "uptime-status"]
+  # Names rather than references, because the kill switch is in the same for_each as the functions it pauses.
+  # alert-notifier isn't paused: it only runs when an alarm fires, and it's what tells me about the pause.
+  uptime_pausable_functions  = ["health-probe", "uptime-status"]
   uptime_probe_schedule_name = "health-probe"
   uptime_alarm_name          = "uptime-services-down"
 }

@@ -1,10 +1,11 @@
-# A kill switch for uptime monitoring. uptime-kill-switch sets the reserved concurrency of the uptime Lambdas to 0,
-# disables the probe schedule and the uptime alarm's actions, and sends a notification. Throttled requests aren't billed,
-# so this stops the cost within seconds, including requests to the public uptime-status function URL.
+# A kill switch for uptime monitoring. Two things publish to the uptime-cost-guard topic:
+#   - an alarm on uptime-status being invoked far more than Dashy ever would, which catches abuse of the public function
+#     URL within minutes
+#   - the monthly budget going over its limit, a slower backstop because AWS updates budgets a few times a day
 #
-# Two things trigger it:
-#   - uptime-status being invoked far more than Dashy ever would, which catches abuse of the public URL within minutes
-#   - the account going over its monthly budget, which is a slower backstop because AWS updates budgets a few times a day
+# Both uptime-kill-switch and alert-notifier subscribe to it. The kill switch sets the reserved concurrency of health-probe
+# and uptime-status to 0, so they're throttled, which isn't billed, and disables the probe schedule and the uptime alarm's
+# actions. The notifier tells me it happened.
 #
 # To resume, run the Terraform workflow. The plan shows the pause as drift (reserved concurrency, the schedule's state
 # and the alarm's actions_enabled), and applying it puts everything back.
@@ -48,6 +49,20 @@ resource "aws_sns_topic_subscription" "uptime-cost-guard-kill-switch" {
   topic_arn = aws_sns_topic.uptime-cost-guard.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.uptime["uptime-kill-switch"].arn
+}
+
+resource "aws_sns_topic_subscription" "uptime-cost-guard-notifier" {
+  topic_arn = aws_sns_topic.uptime-cost-guard.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.uptime["alert-notifier"].arn
+}
+
+resource "aws_lambda_permission" "alert-notifier-cost-guard" {
+  statement_id  = "AllowUptimeCostGuardTopic"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.uptime["alert-notifier"].function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.uptime-cost-guard.arn
 }
 
 resource "aws_lambda_permission" "uptime-kill-switch-sns" {
@@ -107,12 +122,26 @@ resource "aws_iam_role_policy" "uptime-kill-switch" {
         Effect   = "Allow"
         Action   = "cloudwatch:DisableAlarmActions"
         Resource = aws_cloudwatch_metric_alarm.uptime-services-down.arn
-      },
-      {
-        Effect   = "Allow"
-        Action   = "ssm:GetParameter"
-        Resource = aws_ssm_parameter.uptime-ntfy-topic.arn
       }
     ]
   })
+}
+
+# The notifier says a pause has started, not whether it worked, so this tells me if the kill switch fails
+resource "aws_cloudwatch_metric_alarm" "uptime-kill-switch-errors" {
+  alarm_name        = "uptime-kill-switch-errors"
+  alarm_description = "The uptime kill switch failed, so uptime monitoring may not be paused. Check its logs."
+
+  namespace   = "AWS/Lambda"
+  metric_name = "Errors"
+  dimensions  = { FunctionName = aws_lambda_function.uptime["uptime-kill-switch"].function_name }
+  statistic   = "Sum"
+  period      = 60
+
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 0
+  evaluation_periods  = 1
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.uptime-alerts.arn]
 }
