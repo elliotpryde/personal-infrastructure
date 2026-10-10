@@ -26,28 +26,12 @@ resource "aws_budgets_budget" "total-cost" {
   }
 }
 
-resource "azurerm_consumption_budget_subscription" "total-cost" {
-  name            = "budget-total"
-  subscription_id = "/subscriptions/${data.azurerm_client_config.this.subscription_id}"
+# The Azure budget is left in place until the Azure account is closed, but is no
+# longer managed by Terraform.
+removed {
+  from = azurerm_consumption_budget_subscription.total-cost
 
-  amount     = local.azure_budget_gbp
-  time_grain = "Monthly"
-
-  time_period {
-    start_date = local.azure_budget_start
-  }
-
-  notification {
-    enabled        = true
-    threshold      = 60.0
-    operator       = "GreaterThan"
-    contact_emails = [var.my_email_address]
-  }
-
-  notification {
-    enabled        = true
-    threshold      = 100.0
-    operator       = "GreaterThan"
-    contact_emails = [var.my_email_address]
+  lifecycle {
+    destroy = false
   }
 }
