@@ -29,6 +29,25 @@ GitHub Actions logs in to AWS with OIDC, so there are no AWS access keys stored 
 To run Terraform locally, use your own AWS credentials, set the `TF_VAR_*` variables listed in
 `.github/workflows/terraform.yml`, then `cd Terraform && terraform init && terraform plan`.
 
+## Lambda functions
+
+Each directory in [`tools/`](tools) is a Go module for the Lambda function of the same name. Terraform creates the
+functions with placeholder code and ignores code changes, and
+[`.github/workflows/lambdas.yml`](.github/workflows/lambdas.yml) deploys the code instead, so infrastructure and code ship
+through separate pipelines. Pull requests build and test every function. Merging deploys the ones whose directory changed,
+using the `github-lambda-deploy` role, which can only update these functions' code. Run the workflow by hand to redeploy
+them all.
+
+The uptime monitoring functions:
+
+* `uptime-kill-switch` pauses `health-probe` and `uptime-status` if `uptime-status` is requested more than 300 times
+  in 5 minutes, or the account goes over its monthly budget. Both publish to the `uptime-cost-guard` topic, which
+  triggers the kill switch and `alert-notifier`. The kill switch sets the two functions' reserved concurrency to 0 and
+  disables the probe schedule and the uptime alarm's actions. To resume, run the Terraform workflow by hand: the plan
+  shows the pause as drift, and applying it restores everything. The kill switch confirms both on the `uptime-alerts`
+  topic: "Kill switch activated" once a pause has fully worked, and "Kill switch deactivated" from the check the
+  Terraform workflow runs after every apply.
+
 ## One-off setup
 
 GitHub Actions can't create the AWS resources it needs to log in, so these steps were done by hand once. They're kept
@@ -44,6 +63,10 @@ for reference.
 4. **GitHub → Settings → Branches:** protect `master`. Require a pull request, require the `plan` status check, and
    require branches to be up to date before merging, so the plan on the pull request is the plan that gets applied.
 5. **GitHub → Settings → Actions → General:** require approval for workflows from all outside contributors.
+6. **GitHub → Settings → Secrets and variables → Actions:** set the `AWS_LAMBDA_DEPLOY_ROLE_ARN` variable to the
+   `github-lambda-deploy-role-arn` Terraform output.
+7. **Email:** click the link in the "AWS Notification - Subscription Confirmation" email, so uptime alerts are emailed
+   too.
 
 The state used to live in Terraform Cloud. Rather than migrating it, the existing AWS resources were imported into fresh
 S3 state with import blocks on the first apply from GitHub Actions. The old Terraform Cloud workspace and the Azure

@@ -4,3 +4,7 @@ local.auto.tfvars
 *.tfstate
 *.tfstate.backup
 .terraform.lock.hcl
+
+# Lambda builds
+tools/*/bootstrap
+tools/*/function.zip
