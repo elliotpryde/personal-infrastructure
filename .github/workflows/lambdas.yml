@@ -1,0 +1,129 @@
+name: Lambdas
+
+# Builds and tests the Lambda functions in tools/, and on master deploys the ones that changed. Each directory in tools/
+# is a Go module deployed to the function with the same name. Terraform creates the functions
+# (Terraform/uptime-monitoring.tf) but ignores their code, so deploying here never touches Terraform.
+on:
+  pull_request:
+    paths:
+      - "tools/**"
+      - ".github/workflows/lambdas.yml"
+  push:
+    branches: [master]
+    paths:
+      - "tools/**"
+      - ".github/workflows/lambdas.yml"
+  # deploys every function
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      functions: ${{ steps.list.outputs.functions }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - id: list
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          # A push deploys the functions whose directory changed, or all of them if this workflow changed or the
+          # previous commit isn't available. Pull requests only build and test.
+          deploy_all=false
+          if [ "$EVENT" = workflow_dispatch ]; then
+            deploy_all=true
+          elif [ "$EVENT" = push ]; then
+            if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null ||
+              ! git diff --quiet "$BEFORE" "$SHA" -- .github/workflows/lambdas.yml; then
+              deploy_all=true
+            fi
+          fi
+
+          functions='[]'
+          for dir in tools/*/; do
+            name=$(basename "$dir")
+            deploy=false
+            if [ "$deploy_all" = true ]; then
+              deploy=true
+            elif [ "$EVENT" = push ] && ! git diff --quiet "$BEFORE" "$SHA" -- "$dir"; then
+              deploy=true
+            fi
+            functions=$(jq -c --arg name "$name" --argjson deploy "$deploy" '. + [{name: $name, deploy: $deploy}]' <<<"$functions")
+          done
+          echo "functions=$functions" >> "$GITHUB_OUTPUT"
+          jq . <<<"$functions"
+
+  build:
+    needs: discover
+    name: ${{ matrix.function.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        function: ${{ fromJSON(needs.discover.outputs.functions) }}
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: lambda-${{ matrix.function.name }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'deploy' }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    defaults:
+      run:
+        working-directory: tools/${{ matrix.function.name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: tools/${{ matrix.function.name }}/go.mod
+          cache-dependency-path: tools/${{ matrix.function.name }}/go.sum
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::Run gofmt on: $unformatted"
+            exit 1
+          fi
+
+      - run: go vet ./...
+
+      - run: go test ./...
+
+      - name: Build
+        env:
+          GOOS: linux
+          GOARCH: arm64
+          CGO_ENABLED: "0"
+        run: |
+          go build -tags lambda.norpc -trimpath -ldflags="-s -w" -o bootstrap .
+          zip -q function.zip bootstrap
+
+      - if: github.event_name != 'pull_request' && matrix.function.deploy
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_LAMBDA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy
+        if: github.event_name != 'pull_request' && matrix.function.deploy
+        env:
+          FUNCTION: ${{ matrix.function.name }}
+        run: |
+          aws lambda update-function-code --function-name "$FUNCTION" --zip-file fileb://function.zip \
+            --query '{function: FunctionName, sha256: CodeSha256}'
+          aws lambda wait function-updated-v2 --function-name "$FUNCTION"
