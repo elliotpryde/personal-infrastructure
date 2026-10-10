@@ -162,3 +162,43 @@ resource "aws_iam_role_policy_attachment" "github-terraform-apply-admin" {
   role       = aws_iam_role.github-terraform-apply.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
+
+# Used by .github/workflows/lambdas.yml to deploy code to the Lambda functions in uptime-monitoring.tf. It can only
+# replace their code, so a code change can't touch anything else, and only pushes to master can assume it.
+resource "aws_iam_role" "github-lambda-deploy" {
+  name = "github-lambda-deploy"
+  path = "/github/"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = { Federated = aws_iam_openid_connect_provider.github-actions.arn }
+        Action    = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            (local.github_oidc_audience) = "sts.amazonaws.com"
+            (local.github_oidc_subject)  = "repo:${local.github_repository}:ref:refs/heads/master"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "github-lambda-deploy" {
+  name = "update-function-code"
+  role = aws_iam_role.github-lambda-deploy.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["lambda:UpdateFunctionCode", "lambda:GetFunction"]
+        Resource = [for f in aws_lambda_function.uptime : f.arn]
+      }
+    ]
+  })
+}
