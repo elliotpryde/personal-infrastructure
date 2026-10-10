@@ -179,3 +179,18 @@ jobs:
       - run: terraform init
 
       - run: terraform apply -no-color -lock-timeout=5m -auto-approve
+
+      # If the uptime kill switch had paused uptime monitoring, applying will have undone it. The check confirms that
+      # on the uptime-alerts topic. It's informational, so it never fails the apply.
+      - name: Check the uptime kill switch
+        run: |
+          if ! aws lambda invoke --function-name uptime-kill-switch --cli-binary-format raw-in-base64-out \
+            --payload '{"action":"check"}' --query FunctionError --output text kill-switch.json > invoke.txt; then
+            echo "::warning::Couldn't invoke the uptime kill switch"
+            exit 0
+          fi
+          if [ "$(cat invoke.txt)" != "None" ]; then
+            echo "::warning::The uptime kill switch check failed: $(cat kill-switch.json)"
+          else
+            cat kill-switch.json
+          fi
