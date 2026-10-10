@@ -1,36 +1,12 @@
 # Personal infrastructure
 
-## Getting started
+Terraform for the cloud side of my homelab and personal projects, all in AWS (`eu-west-2`):
 
-### Creating the Azure Service Principal with the necessary permissions for Terraform Cloud
+* DNS for elliotpryde.com, including Proton Mail records and the wildcard record for services on the NAS
+* Route 53 health checks for NAS services
+* An IAM user that lets Traefik on the NAS complete Let's Encrypt DNS challenges
+* A monthly AWS budget with email alerts
+* The S3 state bucket and GitHub Actions OIDC roles used to run this Terraform (`Terraform/ci.tf`)
 
-```sh
-az login
-subscription_id=$(az account show --subscription "personal-infrastructure" --query "id" --output tsv)
-# create a new service principal with the 'Contributor' role
-az ad sp create-for-rbac --name "terraform-cloud" --role="Contributor" --scopes="/subscriptions/${subscription_id}"
-# get the object id of the newly created service principal
-sp_object_id=$(az ad sp list --all --filter "displayName eq 'terraform-cloud'" --query "[0].objectId" --output tsv)
-
-# create a role to manage policy definitions and assignment
-az role definition create --role-definition '{
-  "Name": "Policy Admin",
-  "Description": "Perform any actions with policy definitions, policy assignments, and policy set definitions.",
-  "Actions": [
-    "Microsoft.Authorization/policyAssignments/read",
-    "Microsoft.Authorization/policyAssignments/write",
-    "Microsoft.Authorization/policyAssignments/exempt/action",
-    "Microsoft.Authorization/policyAssignments/delete",
-    "Microsoft.Authorization/policyDefinitions/read",
-    "Microsoft.Authorization/policyDefinitions/delete",
-    "Microsoft.Authorization/policyDefinitions/write",
-    "Microsoft.Authorization/policySetDefinitions/read",
-    "Microsoft.Authorization/policySetDefinitions/write",
-    "Microsoft.Authorization/policySetDefinitions/delete"
-  ],
-  "AssignableScopes": ["/subscriptions/'${subscription_id}'"]
-}'
-
-# assign that role to the service principal
-az role assignment create --assignee "$sp_object_id" --role "Policy Admin" --scope "/subscriptions/${subscription_id}"
-```
+The Azure subscription still has a £1 budget alert that is no longer managed here. It goes away when the Azure account
+is closed.

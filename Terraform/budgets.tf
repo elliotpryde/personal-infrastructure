@@ -25,13 +25,3 @@ resource "aws_budgets_budget" "total-cost" {
     subscriber_email_addresses = [var.my_email_address]
   }
 }
-
-# The Azure budget is left in place until the Azure account is closed, but is no
-# longer managed by Terraform.
-removed {
-  from = azurerm_consumption_budget_subscription.total-cost
-
-  lifecycle {
-    destroy = false
-  }
-}
