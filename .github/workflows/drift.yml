@@ -1,0 +1,56 @@
+name: Terraform drift
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: "1.16.5"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  AWS_REGION: eu-west-2
+  TF_VAR_my_email_address: ${{ secrets.TF_VAR_MY_EMAIL_ADDRESS }}
+  TF_VAR_nas_public_ip: ${{ secrets.TF_VAR_NAS_PUBLIC_IP }}
+  TF_VAR_protonmail_elliotpryde_com_verification_string: ${{ secrets.TF_VAR_PROTONMAIL_ELLIOTPRYDE_COM_VERIFICATION_STRING }}
+  TF_VAR_disable_all_health_checks: ${{ vars.TF_VAR_DISABLE_ALL_HEALTH_CHECKS }}
+
+defaults:
+  run:
+    working-directory: Terraform
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: terraform init
+
+      # Exit code 2 means the real infrastructure no longer matches master
+      - run: |
+          set +e
+          terraform plan -no-color -lock-timeout=5m -detailed-exitcode
+          status=$?
+          if [ $status -eq 2 ]; then
+            echo "::error::Drift detected: the infrastructure no longer matches the master branch."
+          fi
+          exit $status

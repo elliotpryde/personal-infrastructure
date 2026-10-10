@@ -1,15 +1,16 @@
 terraform {
-  backend "remote" {
-    organization = "elliotpryde"
-
-    workspaces {
-      name = "personal-infrastructure"
-    }
+  # The bucket is managed in ci.tf. use_lockfile locks state with S3 conditional writes, so no DynamoDB table is needed.
+  backend "s3" {
+    bucket       = "elliotpryde-terraform-state"
+    key          = "personal-infrastructure/terraform.tfstate"
+    region       = "eu-west-2"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 
 provider "aws" {
-  region = "eu-west-2"
+  region = local.aws_default_region
 }
 
 provider "time" {}
