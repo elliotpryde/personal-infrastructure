@@ -2,16 +2,13 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.69.0"
-    }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.117"
+      version = "~> 6.68"
     }
     time = {
       source  = "hashicorp/time"
-      version = "~> 0.7.2"
+      version = "~> 0.14"
     }
   }
-  required_version = ">= 1.0"
+  # 1.12 for identity-based import blocks, 1.10 for S3 state locking
+  required_version = ">= 1.12"
 }

@@ -1,0 +1,182 @@
+name: Terraform
+
+on:
+  # No path filter, so the required "plan" check always reports on every pull request
+  pull_request:
+  push:
+    branches: [master]
+    paths:
+      - "Terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: "1.16.5"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  AWS_REGION: eu-west-2
+  TF_VAR_my_email_address: ${{ secrets.TF_VAR_MY_EMAIL_ADDRESS }}
+  TF_VAR_nas_public_ip: ${{ secrets.TF_VAR_NAS_PUBLIC_IP }}
+  TF_VAR_protonmail_elliotpryde_com_verification_string: ${{ secrets.TF_VAR_PROTONMAIL_ELLIOTPRYDE_COM_VERIFICATION_STRING }}
+  TF_VAR_disable_all_health_checks: ${{ vars.TF_VAR_DISABLE_ALL_HEALTH_CHECKS }}
+
+defaults:
+  run:
+    working-directory: Terraform
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    concurrency:
+      group: terraform-plan-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: fmt
+        continue-on-error: true
+        run: terraform fmt -check -recursive -diff
+
+      - id: init
+        run: terraform init
+
+      - id: validate
+        continue-on-error: true
+        run: terraform validate -no-color
+
+      - id: tflint
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init
+          tflint --recursive --config "$PWD/.tflint.hcl" --format compact
+
+      - id: plan
+        continue-on-error: true
+        run: |
+          set +e
+          terraform plan -no-color -lock-timeout=5m -out=tfplan > plan.log 2>&1
+          status=$?
+          cat plan.log
+          if [ $status -eq 0 ]; then
+            terraform show -no-color tfplan > plan.txt
+          else
+            cp plan.log plan.txt
+          fi
+          exit $status
+
+      - name: Comment plan on pull request
+        if: always() && steps.init.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FMT_OUTCOME: ${{ steps.fmt.outcome }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          TFLINT_OUTCOME: ${{ steps.tflint.outcome }}
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- terraform-plan -->';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const icon = (outcome) => outcome === 'success' ? '✅' : '❌';
+
+            let plan = fs.existsSync('Terraform/plan.txt') ? fs.readFileSync('Terraform/plan.txt', 'utf8') : 'No plan output.';
+            const fallback = process.env.PLAN_OUTCOME === 'success' ? 'Changes to outputs only.' : 'Plan failed, see the output below.';
+            const summary = (plan.match(/^(Plan: .*|No changes\..*)$/m) || [fallback])[0];
+            const limit = 60000;
+            if (plan.length > limit) {
+              plan = plan.slice(0, limit) + `\n\n... truncated, see the full plan in the run log: ${runUrl}`;
+            }
+
+            const body = [
+              marker,
+              '### Terraform plan',
+              '',
+              `| fmt | validate | tflint | plan |`,
+              `| --- | --- | --- | --- |`,
+              `| ${icon(process.env.FMT_OUTCOME)} | ${icon(process.env.VALIDATE_OUTCOME)} | ${icon(process.env.TFLINT_OUTCOME)} | ${icon(process.env.PLAN_OUTCOME)} |`,
+              '',
+              `**${summary}**`,
+              '',
+              '<details><summary>Show plan</summary>',
+              '',
+              '```terraform',
+              plan,
+              '```',
+              '',
+              '</details>',
+              '',
+              `Commit ${context.payload.pull_request.head.sha.slice(0, 7)}, [workflow run](${runUrl}). Merging applies this plan.`,
+            ].join('\n');
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.user.type === 'Bot' && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }
+
+      - name: Fail if any check failed
+        if: >-
+          steps.fmt.outcome != 'success' || steps.validate.outcome != 'success' ||
+          steps.tflint.outcome != 'success' || steps.plan.outcome != 'success'
+        run: |
+          echo "::error::fmt=${{ steps.fmt.outcome }} validate=${{ steps.validate.outcome }} tflint=${{ steps.tflint.outcome }} plan=${{ steps.plan.outcome }}"
+          exit 1
+
+  apply:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    # Only this environment can assume the apply role. Restrict it to the master branch in the repository settings.
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: terraform-apply
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_APPLY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: terraform init
+
+      - run: terraform apply -no-color -lock-timeout=5m -auto-approve
