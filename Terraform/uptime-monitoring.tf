@@ -11,15 +11,20 @@
 locals {
   uptime_metric_namespace = "UptimeMonitoring"
 
-  # name => URL. A 2xx or 3xx response counts as up; redirects aren't followed. Each service is one CloudWatch custom
-  # metric, and the always-free tier covers 10 of them in total, so keep this list short.
+  # name => URL. A 2xx or 3xx response counts as up; redirects aren't followed. Where an app has an unauthenticated
+  # health endpoint it's used, so a login page or SSO can't make it look down.
+  #
+  # Each service is one CloudWatch custom metric, plus one for ServicesDown. The always-free tier covers 10 across the
+  # account, so this list (9 metrics) is at the edge of it: each service beyond it costs $0.30 a month.
   uptime_services = {
-    wallabag = "https://wallabag.elliotpryde.com/"
-    # plex          = "https://plex.elliotpryde.com/identity"
-    # homeassistant = "https://homeassistant.elliotpryde.com/"
-    # miniflux      = "https://miniflux.elliotpryde.com/healthcheck"
-    # grafana       = "https://grafana.elliotpryde.com/api/health"
-    # heimdall      = "https://heimdall.elliotpryde.com/"
+    bitwarden     = "https://bitwarden.elliotpryde.com/alive"
+    homeassistant = "https://homeassistant.elliotpryde.com/"
+    jellyfin      = "https://jellyfin.elliotpryde.com/health"
+    mealie        = "https://mealie.elliotpryde.com/"
+    radarr        = "https://radarr.elliotpryde.com/ping"
+    silverbullet  = "https://silverbullet.elliotpryde.com/"
+    sonarr        = "https://sonarr.elliotpryde.com/ping"
+    ubooquity     = "https://ubooquity.elliotpryde.com/"
   }
 
   uptime_lambdas = {
