@@ -40,6 +40,10 @@ them all.
 
 The uptime monitoring functions:
 
+* `alert-notifier` sends the `uptime-services-down` alarm's state changes to ntfy.sh, naming the services that are down,
+  along with kill switch notifications. To subscribe, add the topic from this command on the `https://ntfy.sh` server
+  in the ntfy app:
+  `aws ssm get-parameter --name /uptime-monitoring/ntfy-topic --with-decryption --query Parameter.Value --output text`
 * `uptime-kill-switch` pauses `health-probe` and `uptime-status` if `uptime-status` is requested more than 300 times
   in 5 minutes, or the account goes over its monthly budget. Both publish to the `uptime-cost-guard` topic, which
   triggers the kill switch and `alert-notifier`. The kill switch sets the two functions' reserved concurrency to 0 and
