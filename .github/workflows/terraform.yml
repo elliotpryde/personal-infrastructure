@@ -38,6 +38,15 @@ jobs:
       group: terraform-plan-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     steps:
+      # Fork pull requests never get OIDC tokens, but fail them outright rather than run their code at all. This is a
+      # failing step, not a job-level condition, because a skipped job satisfies a required status check.
+      - name: Refuse pull requests from forks
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "::error::Plans only run for pull requests from branches in this repository"
+          exit 1
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -48,6 +57,16 @@ jobs:
           terraform_wrapper: false
 
       - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+
+      # Shows the subject the AWS trust policies have to match while the OIDC subject customisation is rolled out.
+      # The token is requested for an audience AWS doesn't accept and only its claims are printed, never the token.
+      - name: Show the OIDC subject
+        run: |
+          token=$(curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=oidc-subject-check" | jq -er .value)
+          payload=$(cut -d. -f2 <<<"$token" | tr '_-' '/+')
+          while (( ${#payload} % 4 )); do payload+="="; done
+          base64 -d <<<"$payload" | jq '{sub, job_workflow_ref, ref}'
 
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
