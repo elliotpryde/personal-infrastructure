@@ -5,6 +5,12 @@ locals {
   terraform_state_key  = "personal-infrastructure/terraform.tfstate"
   github_oidc_subject  = "token.actions.githubusercontent.com:sub"
   github_oidc_audience = "token.actions.githubusercontent.com:aud"
+
+  # The repository's OIDC subject is being customised (include_claim_keys = repository_owner_id, repository_id,
+  # context, job_workflow_ref), so subjects pin the immutable owner and repository IDs plus the workflow file and ref.
+  # While that switch happens the roles accept both formats; the default "repo:" ones get removed afterwards.
+  github_oidc_subject_prefix = "repository_owner_id:3078031:repository_id:282967899"
+  github_workflows           = "${local.github_repository}/.github/workflows"
 }
 
 resource "aws_s3_bucket" "terraform-state" {
@@ -103,7 +109,12 @@ resource "aws_iam_role" "github-terraform-plan" {
         Condition = {
           StringEquals = {
             (local.github_oidc_audience) = "sts.amazonaws.com"
-            (local.github_oidc_subject)  = "repo:${local.github_repository}:pull_request"
+          }
+          StringLike = {
+            (local.github_oidc_subject) = [
+              "repo:${local.github_repository}:pull_request",
+              "${local.github_oidc_subject_prefix}:pull_request:job_workflow_ref:${local.github_workflows}/terraform.yml@*",
+            ]
           }
         }
       }
@@ -149,7 +160,10 @@ resource "aws_iam_role" "github-terraform-apply" {
         Condition = {
           StringEquals = {
             (local.github_oidc_audience) = "sts.amazonaws.com"
-            (local.github_oidc_subject)  = "repo:${local.github_repository}:environment:production"
+            (local.github_oidc_subject) = [
+              "repo:${local.github_repository}:environment:production",
+              "${local.github_oidc_subject_prefix}:environment:production:job_workflow_ref:${local.github_workflows}/terraform.yml@refs/heads/master",
+            ]
           }
         }
       }
@@ -179,7 +193,10 @@ resource "aws_iam_role" "github-lambda-deploy" {
         Condition = {
           StringEquals = {
             (local.github_oidc_audience) = "sts.amazonaws.com"
-            (local.github_oidc_subject)  = "repo:${local.github_repository}:ref:refs/heads/master"
+            (local.github_oidc_subject) = [
+              "repo:${local.github_repository}:ref:refs/heads/master",
+              "${local.github_oidc_subject_prefix}:ref:refs/heads/master:job_workflow_ref:${local.github_workflows}/lambdas.yml@refs/heads/master",
+            ]
           }
         }
       }
